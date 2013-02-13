@@ -28,21 +28,20 @@ class Cell(object):
         y_plus_one = y + 1 if y + 1 < self._world.max_y else 0
         y_minus_one = y - 1 if y - 1 >= 0 else self._world.max_y - 1
 
-        yield self._world.cells[x, y_plus_one]
-        yield self._world.cells[x, y_minus_one]
-
-        yield self._world.cells[x_plus_one, y]
-        yield self._world.cells[x_minus_one, y]
-
-        yield self._world.cells[x_plus_one, y_minus_one]
-        yield self._world.cells[x_minus_one, y_plus_one]
-
-        yield self._world.cells[x_plus_one, y_plus_one]
-        yield self._world.cells[x_minus_one, y_minus_one]
+        return [
+            self._world.cells[x, y_plus_one],
+            self._world.cells[x, y_minus_one],
+            self._world.cells[x_plus_one, y],
+            self._world.cells[x_minus_one, y],
+            self._world.cells[x_plus_one, y_minus_one],
+            self._world.cells[x_minus_one, y_plus_one],
+            self._world.cells[x_plus_one, y_plus_one],
+            self._world.cells[x_minus_one, y_minus_one]
+        ]
 
     def get_neighbors(self):
-        if not self._neighbors:
-            self._neighbors = list(self._find_neighbors())
+        if self._neighbors is None:
+            self._neighbors = self._find_neighbors()
 
         return self._neighbors
 
@@ -51,7 +50,7 @@ class Cell(object):
     def next(self):
         if self._next is None:
             self._next = 0  # Catch all...
-            live_neighbors = sum(1 for n in self.get_neighbors() if n.is_alive)
+            live_neighbors = sum(int(n.is_alive) for n in self.get_neighbors())
 
             if self.is_alive:
                 if 2 > live_neighbors < 3:
@@ -99,11 +98,8 @@ class World(object):
     def next(self):
         map(lambda a: self.cells[a].step(), self.world_coordinates())
 
-        def _g():
-            for x,y in self.world_coordinates():
-                yield x,y, self.cells[x,y].next()
-
-        return list(_g())
+        for x,y in self.world_coordinates():
+            yield x,y, self.cells[x,y].next()
 
 
 def main(stdscr):
@@ -111,7 +107,7 @@ def main(stdscr):
     stdscr.keypad(1)
     stdscr.nodelay(1)
 
-    w = World((200, 50), auto_gen_cells=True)
+    w = World((50, 50), auto_gen_cells=True)
 
     while 1:
         for x,y,c in w.next():
