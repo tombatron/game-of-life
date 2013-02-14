@@ -50,7 +50,7 @@ class Cell(object):
     def next(self):
         if self._next is None:
             self._next = 0  # Catch all...
-            live_neighbors = sum(int(n.is_alive) for n in self.get_neighbors())
+            live_neighbors = sum(n.is_alive for n in self.get_neighbors())
 
             if self.is_alive:
                 if 2 > live_neighbors < 3:
