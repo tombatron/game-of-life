@@ -76,7 +76,7 @@ class World(object):
     cells = state = None
     cell_list = []
 
-    def __init__(self, size, auto_gen_cells=False):
+    def __init__(self, size=(100,100), auto_gen_cells=True):
         self.max_x = size[0]
         self.max_y = size[1]
 
@@ -98,7 +98,7 @@ class World(object):
 
     def next(self):
         map(lambda x: x.step(), self.cell_list)
-        return list(((c.x, c.y, c.next()) for c in self.cell_list if c.next() != c.is_alive))
+        return ((c.x, c.y, c.next()) for c in self.cell_list if c.next() != c.is_alive)
 
 
 def main(stdscr):
@@ -125,7 +125,6 @@ def main(stdscr):
             except curses.error: pass
 
         stdscr.refresh()
-
 
 
 if __name__ == "__main__":
