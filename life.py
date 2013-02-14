@@ -67,7 +67,6 @@ class Cell(object):
     def step(self):
         self.is_alive = self.next()
         self._next = None
-        self.changed = None
 
 
 class World(object):
@@ -75,6 +74,7 @@ class World(object):
     max_x = None
     max_y = None
     cells = state = None
+    cell_list = []
 
     def __init__(self, size, auto_gen_cells=False):
         self.max_x = size[0]
@@ -85,7 +85,8 @@ class World(object):
         if auto_gen_cells:
 
             for x,y in self.world_coordinates():
-                Cell(x, y, self, initially_alive=(random.randint(0,10000) % 3 == 0))
+                c = Cell(x, y, self, initially_alive=(random.randint(0,10000) % 3 == 0))
+                self.cell_list.append(c)
 
     _world_coordinates = None
     def world_coordinates(self):
@@ -96,10 +97,8 @@ class World(object):
         return self._world_coordinates
 
     def next(self):
-        map(lambda a: self.cells[a].step(), self.world_coordinates())
-
-        for x,y in self.world_coordinates():
-            yield x,y, self.cells[x,y].next()
+        map(lambda x: x.step(), self.cell_list)
+        return list(((c.x, c.y, c.next()) for c in self.cell_list if c.next() != c.is_alive))
 
 
 def main(stdscr):
@@ -110,16 +109,24 @@ def main(stdscr):
     w = World((50, 50), auto_gen_cells=True)
 
     while 1:
-        for x,y,c in w.next():
+        living_cells = ((x, y, z) for x, y, z in w.next() if z)
+        dead_cells = ((c.x, c.y) for c in w.cell_list if not c.next() and c.is_alive)
+        for x,y,c in living_cells:
             input = stdscr.getch()
 
             if input == ord('q'):
                 break
 
-            try: stdscr.addch(y, x, '@' if c else ' ')
+            try: stdscr.addch(y, x, '@')
+            except curses.error: pass
+
+        for x,y in dead_cells:
+            try: stdscr.addch(y, x, ' ')
             except curses.error: pass
 
         stdscr.refresh()
+
+
 
 if __name__ == "__main__":
     curses.wrapper(main)
